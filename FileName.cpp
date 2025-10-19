@@ -48,3 +48,8 @@ int test() {
     return 0;
 }
 
+int testiins(int ats)
+{
+    return 0;
+}
+

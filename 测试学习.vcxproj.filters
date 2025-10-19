@@ -19,6 +19,9 @@
     <Filter Include="头文件\crc">
       <UniqueIdentifier>{1863d49e-14c5-4c30-9b1a-eb4a2048edbb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\c">
+      <UniqueIdentifier>{18849269-b150-45b4-90cb-3d2f69d6441e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="测试学习.cpp">
@@ -37,6 +40,9 @@
       <Filter>源文件\crc</Filter>
     </ClCompile>
     <ClCompile Include="自定义函数节.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="testc.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
