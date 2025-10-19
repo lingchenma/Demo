@@ -151,7 +151,13 @@ EXCEPTION_DISPOSITION WINAPI SEH_myExceptHandler(
 //    return 0;
 //}
 using FnAddVectoredExceptionHandler =  PVOID(NTAPI* )(ULONG, _EXCEPTION_POINTERS*);
+class testexplicit{
+public:
+// 类构造时只允许使用这个构造函数
+// 其它构造函数 可标记为友源使用
+explicit testexplicit(int a){}
 
+}
 LONG NTAPI VEH_VectExcepHandler(PEXCEPTION_POINTERS pExcepInfo)
 {
 #ifndef WIN32
