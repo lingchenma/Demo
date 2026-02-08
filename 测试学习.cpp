@@ -1,4 +1,4 @@
-﻿// 测试学习.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+// 测试学习.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
 
 #include <iostream>
@@ -9,7 +9,9 @@
 #include<string.h>
 #include"FileName.h"
 #include"crc32.h"
+#if _WIN64
 #include <opencv2/opencv.hpp>
+#endif
 // 反调试学习
 typedef enum _PROCESSINFOCLASS {
     ProcessBasicInformation = 0,
@@ -138,10 +140,10 @@ EXCEPTION_DISPOSITION WINAPI SEH_myExceptHandler(
     // ExceptionContinueSearch 我处理不了，你继续往下执行只可以处理异常的
     // ExceptionContinueExecution 继续到异常触发的位置接着执行
 
-#ifndef _WIN64
+#if _WIN64
 
 #else
-      //pcontext->Eip = pcontext->Eip + 2;
+      pcontext->Eip = pcontext->Eip + 2;
 #endif
     return ExceptionContinueExecution;
 }
@@ -151,22 +153,18 @@ EXCEPTION_DISPOSITION WINAPI SEH_myExceptHandler(
 //    return 0;
 //}
 using FnAddVectoredExceptionHandler =  PVOID(NTAPI* )(ULONG, _EXCEPTION_POINTERS*);
-class testexplicit{
-public:
-// 类构造时只允许使用这个构造函数
-// 其它构造函数 可标记为友源使用
-explicit testexplicit(int a){}
 
-}
+
 LONG NTAPI VEH_VectExcepHandler(PEXCEPTION_POINTERS pExcepInfo)
 {
-#ifndef WIN32
+#if _WIN64
+#else
     MessageBox(NULL, L"VEH异常处理函数执行了...", L"VEH异常", MB_OK);
 #endif
     
     if (pExcepInfo->ExceptionRecord->ExceptionCode == 0xC0000094)//除0异常
     {
-#ifndef _WIN64
+#if _WIN64
 
 #else
         //将除数修改为1
@@ -183,7 +181,7 @@ LONG NTAPI VEH_VectExcepHandler(PEXCEPTION_POINTERS pExcepInfo)
     }
     else if (pExcepInfo->ExceptionRecord->ExceptionCode ==  0xc0000096) {
         // 这里异常是？虚拟机检测的异常
-#ifndef _WIN64
+#if _WIN64
 
 #else
         //pExcepInfo->ContextRecord->Eip = pExcepInfo->ContextRecord->Eip + 1;
@@ -249,7 +247,8 @@ BOOL hookdbgBreakPoint() {
 
 BOOL checkvm() {
     // 这段只有虚拟机会异常，会调用上面的 VEH_VectExcepHandler 函数
-#ifndef WIN32
+#if _WIN64
+#else
     __try {
         __asm {
             push edx
@@ -275,10 +274,11 @@ BOOL checkvm() {
 }
 
 BOOL checkDbgWindow() {
-#ifndef WIN32
+#if _WIN64
+#else
     HWND hwnd = FindWindow(NULL, L"x3dbg");
     if (hwnd) {
-        std::cout << "检测到x32dbg调试器" << std::endl;
+        std::cout << "检测到x32dbg调试器 " << std::endl;
         return true;
     }
 #endif
@@ -286,14 +286,16 @@ BOOL checkDbgWindow() {
 }
 
 void m_Exitprocess() {
-    std::cout << "检测到单步调试器" << std::endl;
+    std::cout << "检测到单步调试器 " << std::endl;
     ExitProcess(0);
 }
 
 void checkTFflag() {
     // 单步执行这里 就会终止进程
     DWORD addt = (DWORD)m_Exitprocess;
-#ifndef WIN32
+#if _WIN64
+
+#else 
     __try {
         __asm {
             pushfd
@@ -304,7 +306,7 @@ void checkTFflag() {
         }
     }
     __except (1) {
-        std::cout << "没有检测到单步调试器" << std::endl;
+        std::cout << "没有检测到单步调试器 " << std::endl;
     }
 #endif
 }
@@ -315,7 +317,8 @@ BOOL CALLBACK EnumChildProc(
     wchar_t str[0x100] = { 0 };
     // MultiByteToWideChar 窄字节转宽字节
     // WideCharToMultiByte 宽字节转窄字节
-#ifndef WIN32
+#if _WIN64
+#else
     SendMessage(hwnd, WM_GETTEXT, 0x100, (LPARAM)str);
     // printf("窗口名称是：%s\n", str);
     if (str != L"") {
@@ -345,6 +348,7 @@ int add(int, int,int) {
 
 int main()
 {
+#if _WIN64 // opencv 之支持 x64位
 	cv::Mat image = cv::imread("./tupian1.jpg");
     cv::Mat image2 = cv::imread("./tupian2.jpg");
 	cv::namedWindow("image", cv::WINDOW_NORMAL);  // 创建一个可调整大小的窗口
@@ -352,11 +356,24 @@ int main()
     cv::Mat outmat;
     if (image.rows == image2.rows && image.cols == image2.cols)
     {
+		std::cout << "尺寸" << image.rows << " 行 " << image.cols << " 列 " <<  std::endl;
+		std::cout << "通道数 " << image.channels() << std::endl;
+		std::cout << "数据类型" << image.type() << std::endl;
+		std::cout << "位深" << image.depth() << std::endl;
+        if (image.depth() == CV_8U)
+        {
+
+        }
+		std::cout << "step[0]: " << image.step[0] << std::endl;
+        std::cout << "step[1]: " << image.step[1] << std::endl;
+        
+       //  std::cout << "图像数据" << image << std::endl;
         cv::addWeighted(image, 0.5, image2, 0.5, 3, outmat);
         cv::imshow("image", outmat);
     }
     
 	cv::waitKey(0);
+#endif
     void (*func_ptr1)(int);
     auto a_lambda_func = [](int x) { /*...*/ };
 
@@ -459,7 +476,8 @@ int main()
     }*/
     
     // 构造除0异常
-#ifndef WIN32
+#if _WIN64
+#else
      __asm
     {
         xor edx, edx
@@ -483,8 +501,8 @@ int main()
     else {
         printf("IsDebuggerPresent未被调试\n");
     }
-
-#ifndef WIN32
+#if _WIN64
+#else
     _asm {
         mov eax, fs: [0x30]
         mov eax, [eax + 0x68]
@@ -634,7 +652,8 @@ int main()
                 printf("未检测到调试对象\n");
             }
         }
-#ifndef WIN32
+#ifdef _WIN64
+#else
         DWORD buffLen = typeinfo->TypeName.MaximumLength;
         buffLen = buffLen + buffLen % 4;
         typeinfo = (POBJECT_TYPE_INFORMATION)((DWORD)typeinfo + buffLen);
@@ -643,9 +662,9 @@ int main()
 
         // debug 模式下会出现cdcdcdc情况
         char* temp = (char*)typeinfo->TypeName.Buffer;
-        temp = temp + typeInfo->Typename.MaximumLength;
+        temp = temp + typeinfo->TypeName.MaximumLength;
         temp = temp + (DWORD)temp % 4;
-        DWORD data = *(DWORLD*)temp;
+        DWORD data = *((DWORD*)temp);
         while (data == 0) {
             temp += 4;
             data = *(DWORD*)temp;
@@ -656,8 +675,8 @@ int main()
 
     // 
     free(charbuffer);
-
-#ifndef WIN32
+#ifdef _WIN64
+#else
     // crc32 判断int3断点
     
     char*  buff = (char*)GetModuleHandleA(0); // 获取模块的首地址
@@ -677,7 +696,7 @@ int main()
 
         }
         else {
-            std::cout << "没有执行权限，名称是：" << pfirstHeader->Name << std::endl;
+            std::cout << "没有执行权限，名称是： " << pfirstHeader->Name << std::endl;
         }
         pfirstHeader++;
     }
@@ -745,8 +764,8 @@ int main()
 
     }
 #endif
-
-#ifndef WIN32
+#ifdef _WIN64
+#else
     // 关闭服务句柄
     CloseServiceHandle(hSchandle);
 #endif
@@ -762,7 +781,8 @@ int main()
 
     // 单步调试检测
     checkTFflag();
-#ifndef WIN32
+#ifdef _WIN64
+#else
     //获取桌面窗口所有的子窗户，获取所有的标题，包括浏览器标题
     HWND dDesktop = GetDesktopWindow();
     HWND deskSubwindow = GetWindow(dDesktop, GW_CHILD);
